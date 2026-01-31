@@ -1,11 +1,11 @@
 import pandas as pd
-import time
 
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 
 service = Service()
 options = webdriver.ChromeOptions()
@@ -16,8 +16,10 @@ url = 'https://books.toscrape.com/'
 
 driver.get(url)
 
-livros = driver.find_elements(By.TAG_NAME, 'a')[54:94:2] #pega 20 elementos de livro, que sao aqueles na minha pagina;
 listagemStock = []
+
+paginaAtual = 0 # logicazinha pra poder escolher a quantidade de paginas q a gnt quer passar
+numeroPaginas = 5
 
 def pegarDataLivro():
    
@@ -31,14 +33,33 @@ def pegarDataLivro():
 
    return {"nome": titulo, "preco": preco}
 
+while numeroPaginas > paginaAtual:
 
-for livro in livros:
-   
-   livro.click() 
-   response = pegarDataLivro()
+   livros = driver.find_elements(By.TAG_NAME, 'a')[54:94:2] #pega 20 elementos de livro, que sao aqueles na minha pagina;
 
-   listagemStock.append(response)
-   
-   driver.back()
+   for livro in livros:
 
+      livro.click() 
+      response = pegarDataLivro()
+
+      listagemStock.append(response)
+      driver.back()
+
+   paginaAtual += 1
+
+   try:
+      botaoProximaPg = driver.find_element(By.CSS_SELECTOR, 'li.next a') #pega o botao para pular a pagina
+      botaoProximaPg.click()
+
+      WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+               (By.CSS_SELECTOR, 'article.product_pod')
+            )
+      )
+      
+   except NoSuchElementException:
+      break
+
+df = pd.DataFrame(listagemStock)
+df.to_csv("livros.csv", index=False, encoding="utf-8")
 print(listagemStock)
