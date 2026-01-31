@@ -61,5 +61,5 @@ while numeroPaginas > paginaAtual:
       break
 
 df = pd.DataFrame(listagemStock)
-df.to_csv("livros.csv", index=False, encoding="utf-8")
+df.to_csv("livros.csv", index=False, sep=';', encoding="utf-8")
 print(listagemStock)
